@@ -6,8 +6,16 @@ const MOCK_EMAILS = ["admin@eduverify.com", "test@test.com", "docente@uni.edu"];
 const styles = `
   @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=Sora:wght@400;600;700&display=swap');
 
+  html, body {
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    padding: 0;
+  }
+
   .ev-root {
     min-height: 100vh;
+    width: 100%;
     background: #0A0F1E;
     display: flex;
     font-family: 'DM Sans', sans-serif;

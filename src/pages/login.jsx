@@ -11,9 +11,18 @@ const MOCK_USERS = [
 const styles = `
   @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=Sora:wght@400;600;700&display=swap');
 
+  html, body { 
+    overflow-x: hidden; 
+    width: 100%;
+    margin: 0;
+    padding: 0;
+  }
+
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
   .ev-root {
+    width: 100vw;
+    margin-left: calc(50% - 50vw);
     min-height: 100vh;
     background: #0A0F1E;
     display: flex;
@@ -317,39 +326,59 @@ const styles = `
     40%, 60% { transform: translateX(6px); }
   }
 
+  .ev-mobile-brand { display: none; }
+
   /* ── Tablet (≤1024px) ── */
   @media (max-width: 1024px) {
-    .ev-left { width: 340px; padding: 2rem; }
+    .ev-left { width: 320px; padding: 2rem; }
     .ev-tagline h2 { font-size: 22px; }
     .ev-hints { margin-top: 2rem; }
   }
 
-  /* ── Mobile (≤768px) ── */
+  /* ── Mobile (≤768px): fondo full-screen, card centrado ── */
   @media (max-width: 768px) {
-    .ev-root { flex-direction: column; overflow-x: hidden; }
-    .ev-left {
-      width: 100%; min-height: unset;
-      padding: 1.25rem;
-      border-right: none;
-      border-bottom: 1px solid rgba(255,255,255,0.06);
-      flex-direction: row; align-items: center;
-      justify-content: space-between;
+    .ev-root {
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      padding: 1.5rem 1rem;
     }
-    .ev-brand { margin-bottom: 0; }
-    .ev-tagline { display: none; }
-    .ev-hints { display: none; }
-    .ev-right { padding: 1.5rem 1rem 2.5rem; align-items: flex-start; }
-    .ev-card { padding: 1.5rem 1.25rem; border-radius: 16px; max-width: 100%; }
+    .ev-left { display: none; }
+    .ev-right {
+      width: 100%;
+      flex: unset;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0;
+    }
+    .ev-card {
+      width: 100%;
+      max-width: 420px;
+      padding: 2rem 1.5rem;
+      border-radius: 18px;
+    }
+    .ev-mobile-brand {
+      display: flex !important;
+      align-items: center;
+      gap: 10px;
+      justify-content: center;
+      margin-bottom: 1.75rem;
+    }
     .ev-toast {
-      min-width: unset; width: calc(100% - 2rem);
-      left: 1rem; transform: translateX(0) translateY(-100px);
+      min-width: unset;
+      width: calc(100% - 2rem);
+      left: 1rem;
+      transform: translateX(0) translateY(-100px);
     }
     .ev-toast.show { transform: translateX(0) translateY(0); }
   }
 
   /* ── Small mobile (≤400px) ── */
   @media (max-width: 400px) {
-    .ev-card { padding: 1.25rem 1rem; }
+    .ev-root { padding: 1rem 0.75rem; }
+    .ev-card { padding: 1.5rem 1.25rem; border-radius: 16px; }
     .ev-card-header h1 { font-size: 19px; }
     .ev-btn { font-size: 13px; }
   }
@@ -532,6 +561,10 @@ export default function EduVerifyLogin() {
               <SuccessScreen user={loggedUser} />
             ) : (
               <>
+                <div className="ev-mobile-brand">
+                  <div className="ev-brand-icon">🎓</div>
+                  <span className="ev-brand-name">EduVerify</span>
+                </div>
                 <div className="ev-card-header">
                   <h1>Iniciar sesión</h1>
                   <p>Ingresa tus credenciales para acceder al sistema</p>
@@ -609,7 +642,7 @@ export default function EduVerifyLogin() {
 
                 <p className="ev-register">
                   <button 
-                    style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#63B3ED', textDecoration: 'none', fontWeight: '500', fontSize: '13px' }}
+                    style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#63B3ED', textDecoration: 'none', fontWeight: '500' }}
                     onClick={() => navigate('/register')}
                   >
                     Crear cuenta nueva en EduVerify
