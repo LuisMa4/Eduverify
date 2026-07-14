@@ -52,6 +52,7 @@ export default function EduverifyCreateExam() {
   const [loading, setLoading] = useState(false);
   const [done, setDone] = useState(false);
   const [codigoAcceso, setCodigoAcceso] = useState("");
+  const [submitError, setSubmitError] = useState("");
 
   const setField = (k, v) => {
     setForm((p) => ({ ...p, [k]: v }));
@@ -117,28 +118,34 @@ export default function EduverifyCreateExam() {
 
   const handleCreate = async () => {
     setLoading(true);
-    await new Promise((r) => setTimeout(r, 1500));
+    setSubmitError("");
     const code = generarCodigoAcceso();
-    // addExam() mete el examen en ExamsContext (estado compartido): a partir
-    // de aquí ya aparece en /teacher y es "entrable" desde /student con este
-    // código, sin necesidad de recargar nada.
-    addExam({
-      nombre: form.nombre.trim(),
-      curso: form.curso,
-      docente: user ? `${user.nombre} ${user.apellido}` : "Docente",
-      fecha: form.fecha,
-      hora: form.hora,
-      duracion: Number(form.duracion),
-      estado: "programado",
-      nota: null,
-      inscritos: 0,
-      conectados: 0,
-      alertas: 0,
-      codigoAcceso: code,
-    });
-    setCodigoAcceso(code);
-    setLoading(false);
-    setDone(true);
+    try {
+      // addExam() crea el examen en el backend real y lo mete en ExamsContext
+      // (estado compartido): a partir de aquí ya aparece en /teacher y es
+      // "entrable" desde /student con este código, sin necesidad de recargar nada.
+      await addExam({
+        nombre: form.nombre.trim(),
+        curso: form.curso,
+        docente: user ? `${user.nombre} ${user.apellido}` : "Docente",
+        fecha: form.fecha,
+        hora: form.hora,
+        duracion: Number(form.duracion),
+        estado: "programado",
+        nota: null,
+        inscritos: 0,
+        conectados: 0,
+        alertas: 0,
+        codigoAcceso: code,
+      });
+      setCodigoAcceso(code);
+      setDone(true);
+    } catch (err) {
+      setSubmitError(err.message);
+      doShake();
+    } finally {
+      setLoading(false);
+    }
   };
 
   const fechaFormateada = form.fecha
@@ -475,6 +482,8 @@ export default function EduverifyCreateExam() {
                       {form.camara && <span className="ev-summary-badge"><i className="ti ti-camera" /> Supervisión por cámara</span>}
                       {form.pantallaCompleta && <span className="ev-summary-badge"><i className="ti ti-device-desktop" /> Pantalla completa forzada</span>}
                     </div>
+
+                    {submitError && <p className="ev-err" style={{ marginBottom: 10 }}>{submitError}</p>}
 
                     <div className="ev-btn-row">
                       <button className="ev-btn-back" onClick={() => setStep(1)}><i className="ti ti-arrow-left" /> Atrás</button>

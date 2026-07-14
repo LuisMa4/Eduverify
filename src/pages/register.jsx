@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-
-const MOCK_EMAILS = ["test@test.com", "docente@uni.edu"];
+import { apiRegister } from "../services/api.js";
 
 const styles = `
   @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=Sora:wght@400;600;700&display=swap');
@@ -524,7 +523,6 @@ export default function EduVerifyRegister() {
   const [errors, setErrors] = useState({});
   const [terms, setTerms] = useState(false);
   const [showPwd, setShowPwd] = useState({ pwd: false, pwd2: false });
-  const [emailChecking, setEmailChecking] = useState(false);
   const [step, setStep] = useState(0);
   const [submitted, setSubmitted] = useState(false);
   const [toast, setToast] = useState({ show: false, type: "", title: "", subtitle: "" });
@@ -557,20 +555,6 @@ export default function EduVerifyRegister() {
     validate(name, value);
   };
 
-  const checkEmail = () => {
-    const val = fields.email;
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val)) return;
-    setEmailChecking(true);
-    setTimeout(() => {
-      setEmailChecking(false);
-      if (MOCK_EMAILS.includes(val.toLowerCase())) {
-        setStatuses(s => ({ ...s, email: "error" }));
-        setErrors(e => ({ ...e, email: "Este correo ya se encuentra registrado" }));
-        showToast("error", "Correo ya registrado", "Intenta con otro correo o inicia sesión");
-      }
-    }, 900);
-  };
-
   const showToast = (type, title, subtitle) => {
     setToast({ show: true, type, title, subtitle });
     setTimeout(() => setToast(t => ({ ...t, show: false })), 3500);
@@ -578,14 +562,21 @@ export default function EduVerifyRegister() {
 
   const allValid = Object.keys(rules).every(k => statuses[k] === "success") && terms;
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!allValid) return;
     setStep(1);
-    setTimeout(() => {
+    try {
+      await apiRegister({ email: fields.email, password: fields.pwd, role });
       setStep(2);
       setSubmitted(true);
       showToast("success", "¡Registro exitoso!", "Ya puedes iniciar sesión en EduVerify");
-    }, 1800);
+      setTimeout(() => navigate("/"), 1800);
+    } catch (err) {
+      setStep(0);
+      setStatuses(s => ({ ...s, email: "error" }));
+      setErrors(e => ({ ...e, email: err.message }));
+      showToast("error", "No se pudo registrar", err.message);
+    }
   };
 
   const stepDot = (i) => {
@@ -670,11 +661,9 @@ export default function EduVerifyRegister() {
             <FieldInput
               label="Correo electrónico" id="f-email" type="email"
               placeholder="ana@universidad.edu" value={fields.email} icon="mail"
-              status={emailChecking ? null : statuses.email}
+              status={statuses.email}
               errorMsg={errors.email}
               onChange={e => handleChange("email", e.target.value)}
-              onBlur={checkEmail}
-              rightSlot={emailChecking ? <div className="ev-spinner" /> : undefined}
             />
 
             <FieldInput

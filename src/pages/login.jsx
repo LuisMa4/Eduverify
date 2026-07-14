@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { MOCK_USERS } from "../data/mockUsers.js";
 import { useAuth } from "../hooks/useAuth.js";
+import { apiLogin } from "../services/api.js";
 
 const styles = `
   @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=Sora:wght@400;600;700&display=swap');
@@ -459,12 +459,6 @@ export default function EduVerifyLogin() {
     setTimeout(() => setShake(false), 500);
   };
 
-  const fillCredentials = (user) => {
-    setEmail(user.email);
-    setPassword(user.password);
-    setAuthError(null);
-  };
-
   useEffect(() => {
     if (!loggedUser) return;
     const routeByRole = {
@@ -475,40 +469,35 @@ export default function EduVerifyLogin() {
     return () => clearTimeout(t);
   }, [loggedUser, navigate]);
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!email || !password) return;
     setLoading(true);
     setAuthError(null);
 
-    // Simula latencia de red
-    setTimeout(() => {
-      const user = MOCK_USERS.find(
-        u => u.email.toLowerCase() === email.toLowerCase() && u.password === password
-      );
-
-      if (user) {
-        setLoggedUser(user); // estado local: dispara la pantalla de éxito de esta página
-        login(user); // AuthContext: el resto de la app (topbars, dashboards) ya sabe quién entró
-        showToast("success", "Acceso autorizado", `Bienvenido, ${user.nombre} ${user.apellido}`);
+    try {
+      const user = await apiLogin(email, password);
+      setLoggedUser(user); // estado local: dispara la pantalla de éxito de esta página
+      login(user); // AuthContext: el resto de la app (topbars, dashboards) ya sabe quién entró
+      showToast("success", "Acceso autorizado", `Bienvenido, ${user.email}`);
+    } catch (err) {
+      const next = attempts + 1;
+      setAttempts(next);
+      triggerShake();
+      if (next >= 3) {
+        setAuthError({
+          title: "Demasiados intentos fallidos",
+          sub: "Tu cuenta será bloqueada temporalmente. Revisa tus credenciales o recupera tu contraseña."
+        });
       } else {
-        const next = attempts + 1;
-        setAttempts(next);
-        triggerShake();
-        if (next >= 3) {
-          setAuthError({
-            title: "Demasiados intentos fallidos",
-            sub: "Tu cuenta será bloqueada temporalmente. Revisa tus credenciales o recupera tu contraseña."
-          });
-        } else {
-          setAuthError({
-            title: "Credenciales incorrectas",
-            sub: `Correo o contraseña inválidos. Intento ${next} de 3.`
-          });
-        }
-        showToast("error", "Autenticación fallida", "Verifica tu correo y contraseña");
+        setAuthError({
+          title: "Credenciales incorrectas",
+          sub: `${err.message}. Intento ${next} de 3.`
+        });
       }
+      showToast("error", "Autenticación fallida", err.message);
+    } finally {
       setLoading(false);
-    }, 1000);
+    }
   };
 
   const handleKeyDown = (e) => { if (e.key === "Enter") handleSubmit(); };
@@ -536,26 +525,6 @@ export default function EduVerifyLogin() {
             <p>Inicia sesión para continuar con tus exámenes o gestionar tus cursos con supervisión IA en tiempo real.</p>
           </div>
 
-          <div className="ev-hints">
-            <div className="ev-hints-label">Cuentas de prueba — clic para rellenar</div>
-            {MOCK_USERS.map((u) => {
-              const meta = ROLE_META[u.role];
-              return (
-                <div className="ev-hint-card" key={u.email} onClick={() => fillCredentials(u)}>
-                  <div className="ev-hint-avatar" style={{ background: meta.avatarBg }}>
-                    <i className={`ti ${meta.icon}`} style={{ color: meta.color, fontSize: 16 }} />
-                  </div>
-                  <div className="ev-hint-info">
-                    <div className="ev-hint-name">{u.nombre} {u.apellido}</div>
-                    <div className="ev-hint-email">{u.email}</div>
-                  </div>
-                  <span className="ev-hint-role" style={{ background: meta.bg, color: meta.color }}>
-                    {meta.label}
-                  </span>
-                </div>
-              );
-            })}
-          </div>
         </div>
 
         {/* ── Panel derecho ── */}
